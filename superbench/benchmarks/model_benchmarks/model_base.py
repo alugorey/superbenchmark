@@ -184,7 +184,7 @@ class ModelBenchmark(Benchmark):
         self._judge_gpu_availability()
         self._set_force_fp32()
         logger.info(
-            'Model placement - model: {}, GPU availablility: {}, pin memory: {}, force fp32: {}.'.format(
+            'TEST::::Model placement - model: {}, GPU availablility: {}, pin memory: {}, force fp32: {}.'.format(
                 self._name, self._gpu_available, self._args.pin_memory, self._args.force_fp32
             )
         )

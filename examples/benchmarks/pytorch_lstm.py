@@ -10,7 +10,7 @@ Commands to run:
 """
 
 import argparse
-
+from rpdTracerControl import rpdTracerControl
 from superbench.benchmarks import Platform, Framework, BenchmarkRegistry
 from superbench.common.utils import logger
 
@@ -21,6 +21,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+    rpdTracerControl.setFilename(name="nvidia.rpd", append=False)
     # Specify the model name and benchmark parameters.
     model_name = 'lstm'
     parameters = '--batch_size 1 --seq_len 256 --precision float32 --num_warmup 8 --num_steps 64 --run_count 2'

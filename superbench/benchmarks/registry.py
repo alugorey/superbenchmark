@@ -214,6 +214,7 @@ class BenchmarkRegistry:
                     parameters = predefine_params + ' ' + parameters
 
                 benchmark = benchmark_class(benchmark_name, parameters)
+                print("TYPE OF BENCHMARK", type(benchmark))
                 benchmark.run()
 
         return benchmark

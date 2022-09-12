@@ -10,6 +10,7 @@ from superbench.benchmarks import BenchmarkRegistry, Precision
 from superbench.benchmarks.model_benchmarks.model_base import Optimizer
 from superbench.benchmarks.model_benchmarks.pytorch_base import PytorchBase
 from superbench.benchmarks.model_benchmarks.random_dataset import TorchRandomDataset
+from rpdTracerControl import rpdTracerControl
 
 
 class LSTMBenchmarkModel(torch.nn.Module):
@@ -59,6 +60,8 @@ class PytorchLSTM(PytorchBase):
         self._supported_precision = [Precision.FLOAT32, Precision.FLOAT16]
         self._optimizer_type = Optimizer.SGD
         self._loss_fn = torch.nn.CrossEntropyLoss()
+        self.profile = rpdTracerControl()
+        self.emit_nvtx = torch.autograd.profiler.emit_nvtx()
 
     def add_parser_arguments(self):
         """Add the LSTM-specified arguments.
@@ -139,7 +142,20 @@ class PytorchLSTM(PytorchBase):
         curr_step = 0
         check_frequency = 100
         while True:
+            if curr_step == self._args.num_warmup:
+                self.profile.start()
+                self.emit_nvtx.__enter__()
+            if curr_step == self._args.num_warmup + 5:
+                self.profile.stop()
+                self.emit_nvtx.__exit__(None, None, None)
             for idx, sample in enumerate(self._dataloader):
+
+            #    if curr_step == self._args.num_warmup:
+            #        self.profile.start()
+            #        self.emit_nvtx.__enter__()
+            #    if curr_step == self._args.num_warmup + 5:
+            #        self.profile.stop()
+            #        self.emit_nvtx.__exit__(None, None, None)
                 sample = sample.to(dtype=getattr(torch, precision.value))
                 start = self._timer()
                 if self._gpu_available:
@@ -155,6 +171,10 @@ class PytorchLSTM(PytorchBase):
                     # Save the step time of every training/inference step, unit is millisecond.
                     duration.append((end - start) * 1000)
                 if self._is_finished(curr_step, end, check_frequency):
+                    self.profile.stop()
+                    print("NAME: ", self._name)
+                    print("NUMBER OF WARMUP STEPS: ", self._args.num_warmup)
+                    print("NUMBER OF STEPS: ", curr_step)
                     return duration
 
     def _inference_step(self, precision):
