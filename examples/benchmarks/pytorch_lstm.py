@@ -13,6 +13,10 @@ import argparse
 
 from superbench.benchmarks import Platform, Framework, BenchmarkRegistry
 from superbench.common.utils import logger
+from torch.autograd.profiler import profile
+
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -26,16 +30,18 @@ if __name__ == '__main__':
     parameters = '--batch_size 1 --seq_len 256 --precision float32 --num_warmup 8 --num_steps 64 --run_count 2'
     if args.distributed:
         parameters += ' --distributed_impl ddp --distributed_backend nccl'
+    with profile(profile_memory=True, with_modules=True, with_stack=True) as prof:
 
-    # Create context for lstm benchmark and run it for 64 steps.
-    context = BenchmarkRegistry.create_benchmark_context(
-        model_name, platform=Platform.CUDA, parameters=parameters, framework=Framework.PYTORCH
-    )
-
-    benchmark = BenchmarkRegistry.launch_benchmark(context)
-    if benchmark:
-        logger.info(
-            'benchmark: {}, return code: {}, result: {}'.format(
-                benchmark.name, benchmark.return_code, benchmark.result
-            )
+        # Create context for lstm benchmark and run it for 64 steps.
+        context = BenchmarkRegistry.create_benchmark_context(
+            model_name, platform=Platform.CUDA, parameters=parameters, framework=Framework.PYTORCH
         )
+
+        benchmark = BenchmarkRegistry.launch_benchmark(context)
+        if benchmark:
+            logger.info(
+                'benchmark: {}, return code: {}, result: {}'.format(
+                    benchmark.name, benchmark.return_code, benchmark.result
+                )
+            )
+    print(prof.key_averages(group_by_stack_n=5).table(sort_by="self_cpu_time_total", row_limit=-1))

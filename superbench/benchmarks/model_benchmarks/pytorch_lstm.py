@@ -10,7 +10,7 @@ from superbench.benchmarks import BenchmarkRegistry, Precision
 from superbench.benchmarks.model_benchmarks.model_base import Optimizer
 from superbench.benchmarks.model_benchmarks.pytorch_base import PytorchBase
 from superbench.benchmarks.model_benchmarks.random_dataset import TorchRandomDataset
-
+from torch.autograd.profiler import profile, record_function, ProfilerActivity
 
 class LSTMBenchmarkModel(torch.nn.Module):
     """The LSTM model for benchmarking."""
@@ -138,6 +138,8 @@ class PytorchLSTM(PytorchBase):
         duration = []
         curr_step = 0
         check_frequency = 100
+
+ #       with profile( with_stack=True) as prof:
         while True:
             for idx, sample in enumerate(self._dataloader):
                 sample = sample.to(dtype=getattr(torch, precision.value))
@@ -155,6 +157,8 @@ class PytorchLSTM(PytorchBase):
                     # Save the step time of every training/inference step, unit is millisecond.
                     duration.append((end - start) * 1000)
                 if self._is_finished(curr_step, end, check_frequency):
+                    print("MADE IT HERE!")
+#                    print(prof.key_averages(group_by_stack_n=5).table(sort_by="self_cpu_time_total", row_limit=5))
                     return duration
 
     def _inference_step(self, precision):
